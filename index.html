@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>实时金融价格监控</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-chart-line"></i> 实时金融价格监控</h1>
+            <div class="last-update">
+                <span>最后更新: <span id="last-update-time">--</span></span>
+                <button id="refresh-btn" class="refresh-btn">
+                    <i class="fas fa-sync-alt"></i> 刷新
+                </button>
+            </div>
+        </header>
+
+        <div class="status-bar">
+            <div class="status-indicator">
+                <span class="status-dot" id="status-dot"></span>
+                <span id="status-text">连接中...</span>
+            </div>
+            <div class="data-source-info">
+                <div class="api-status" id="api-status">
+                    <i class="fas fa-database"></i>
+                    <span id="api-status-text">检测数据源中...</span>
+                </div>
+                <div class="source-details" id="source-details">
+                    <small>汇率: <span id="forex-source">--</span> | 黄金: <span id="gold-source">--</span></small>
+                </div>
+            </div>
+        </div>
+
+        <div class="price-grid">
+            <!-- 黄金价格卡片 -->
+            <div class="price-card" data-symbol="XAU">
+                <div class="card-header">
+                    <div class="asset-info">
+                        <i class="fas fa-coins gold-icon"></i>
+                        <div>
+                            <h3>黄金 (XAU)</h3>
+                            <span class="base-currency">人民币/克</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="price-info">
+                    <div class="current-price" id="price-XAU">
+                        <span class="loading">加载中...</span>
+                    </div>
+                    <div class="price-change" id="change-XAU">
+                        <span class="change-amount">--</span>
+                        <span class="change-percent">(--%)</span>
+                    </div>
+                </div>
+                <div class="price-details">
+                    <div class="detail-item">
+                        <span>今日开盘:</span>
+                        <span id="open-XAU">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>今日最高:</span>
+                        <span id="high-XAU">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>今日最低:</span>
+                        <span id="low-XAU">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 美元卡片 -->
+            <div class="price-card" data-symbol="USD">
+                <div class="card-header">
+                    <div class="asset-info">
+                        <i class="fas fa-dollar-sign usd-icon"></i>
+                        <div>
+                            <h3>美元 (USD)</h3>
+                            <span class="base-currency">人民币/美元</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="price-info">
+                    <div class="current-price" id="price-USD">
+                        <span class="loading">加载中...</span>
+                    </div>
+                    <div class="price-change" id="change-USD">
+                        <span class="change-amount">--</span>
+                        <span class="change-percent">(--%)</span>
+                    </div>
+                </div>
+                <div class="price-details">
+                    <div class="detail-item">
+                        <span>今日开盘:</span>
+                        <span id="open-USD">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>今日最高:</span>
+                        <span id="high-USD">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>今日最低:</span>
+                        <span id="low-USD">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 瑞士法郎卡片 -->
+            <div class="price-card" data-symbol="CHF">
+                <div class="card-header">
+                    <div class="asset-info">
+                        <i class="fas fa-mountain chf-icon"></i>
+                        <div>
+                            <h3>瑞士法郎 (CHF)</h3>
+                            <span class="base-currency">人民币/瑞士法郎</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="price-info">
+                    <div class="current-price" id="price-CHF">
+                        <span class="loading">加载中...</span>
+                    </div>
+                    <div class="price-change" id="change-CHF">
+                        <span class="change-amount">--</span>
+                        <span class="change-percent">(--%)</span>
+                    </div>
+                </div>
+                <div class="price-details">
+                    <div class="detail-item">
+                        <span>今日开盘:</span>
+                        <span id="open-CHF">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>今日最高:</span>
+                        <span id="high-CHF">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>今日最低:</span>
+                        <span id="low-CHF">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 日元卡片 -->
+            <div class="price-card" data-symbol="JPY">
+                <div class="card-header">
+                    <div class="asset-info">
+                        <i class="fas fa-yen-sign jpy-icon"></i>
+                        <div>
+                            <h3>日元 (JPY)</h3>
+                            <span class="base-currency">人民币/100日元</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="price-info">
+                    <div class="current-price" id="price-JPY">
+                        <span class="loading">加载中...</span>
+                    </div>
+                    <div class="price-change" id="change-JPY">
+                        <span class="change-amount">--</span>
+                        <span class="change-percent">(--%)</span>
+                    </div>
+                </div>
+                <div class="price-details">
+                    <div class="detail-item">
+                        <span>今日开盘:</span>
+                        <span id="open-JPY">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>今日最高:</span>
+                        <span id="high-JPY">--</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>今日最低:</span>
+                        <span id="low-JPY">--</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 趋势图区域 -->
+        <div class="chart-section">
+            <div class="chart-header">
+                <h2><i class="fas fa-chart-area"></i> 价格走势对比 (人民币基准)</h2>
+                <div class="chart-controls">
+                    <div class="time-period-buttons">
+                        <button class="period-btn" data-period="1M">1个月</button>
+                        <button class="period-btn active" data-period="6M">半年</button>
+                        <button class="period-btn" data-period="1Y">1年</button>
+                        <button class="period-btn" data-period="3Y">3年</button>
+                        <button class="period-btn" data-period="custom">自定义</button>
+                    </div>
+                    <div class="custom-date-inputs" id="custom-date-inputs">
+                        <input type="date" id="start-date" class="date-input">
+                        <span>至</span>
+                        <input type="date" id="end-date" class="date-input">
+                        <button id="apply-custom-date" class="apply-btn">应用</button>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-loading" id="chart-loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>正在加载图表数据...</span>
+                </div>
+                <canvas id="trend-chart"></canvas>
+            </div>
+            <div class="chart-legend">
+                <div class="legend-items">
+                    <div class="legend-section">
+                        <h4>左轴 (人民币/克)</h4>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background-color: #f6ad55;"></span>
+                            <span>黄金 (XAU)</span>
+                        </div>
+                    </div>
+                    <div class="legend-section">
+                        <h4>右轴 (人民币汇率)</h4>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background-color: #48bb78;"></span>
+                            <span>美元 (USD)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background-color: #ed64a6;"></span>
+                            <span>瑞士法郎 (CHF)</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color" style="background-color: #4299e1;"></span>
+                            <span>日元 (JPY/100)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-info">
+                    <p><i class="fas fa-info-circle"></i> 双Y轴设计：黄金价格使用左轴，汇率使用右轴，便于对比不同量级的价格变化</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>📊 数据来源: 多个免费金融API | 所有价格均以人民币为基准单位 | 免费数据可能有1-15分钟延迟</p>
+            <p>⚠️ 价格仅供参考，实际交易请以官方报价为准 | 如需实时精确数据，建议使用专业金融终端</p>
+            <p>🔄 更新频率: 每60秒自动刷新 • 支持手动刷新获取最新数据 • 点击图例可隐藏/显示对应资产走势</p>
+            <div style="margin-top: 10px; font-size: 0.8rem; color: #a0aec0;">
+                <details>
+                    <summary style="cursor: pointer;">推荐的专业数据源 (付费)</summary>
+                    <p style="margin-top: 8px;">
+                        • 汇率: Bloomberg API, Reuters Eikon, Fixer.io Pro<br>
+                        • 黄金: Gold API Pro, MarketStack, Finnhub<br>
+                        • 实时性: 通常延迟 < 1秒，更新频率更高
+                    </p>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
